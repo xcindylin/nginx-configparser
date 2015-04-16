@@ -1,11 +1,40 @@
 #include "gtest/gtest.h"
 #include "config_parser.h"
+#include <sstream>
+#include <string>
 
-TEST(NginxConfigParserTest, SimpleConfig) {
+class NginxStringConfigTest : public ::testing::Test {
+    protected:
+        bool ParseString(const std::string& config_string) {
+            std::stringstream config_stream(config_string);
+            return parser_.Parse(&config_stream, &config_);
+        }
+
+        NginxConfigParser parser_;
+        NginxConfig config_;
+};
+
+TEST(NginxConfigParserTest, SimpleConfigFromFile) {
   NginxConfigParser parser;
   NginxConfig out_config;
 
   bool success = parser.Parse("example_config", &out_config);
 
   EXPECT_TRUE(success);
+}
+
+TEST_F(NginxStringConfigTest, SimpleTextConfig) {
+    EXPECT_TRUE(ParseString("foo bar;"));
+}
+
+TEST_F(NginxStringConfigTest, SimpleBadTextConfig) {
+    EXPECT_FALSE(ParseString("foo bar"));
+}
+
+TEST_F(NginxStringConfigTest, SimpleNestedConfig) {
+    EXPECT_TRUE(ParseString("foo { foo bar; }"));
+}
+
+TEST_F(NginxStringConfigTest, DoubleNestedConfig) {
+    EXPECT_TRUE(ParseString("foo { foo { foo bar; } }"));
 }
